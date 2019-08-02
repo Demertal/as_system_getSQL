@@ -1,6 +1,4 @@
---create proc as_system_getSQL_table  @code nvarchar(32) as
-declare @code nvarchar(32)
-set @code = 'supplierOffers'
+create proc as_system_getSQL_table  @code nvarchar(32) as
 select top 1 'declare @tableID int, @columnID int, @datatypeID int, @editableTypeID int, @filterTypeID int; set @tableID = null; ' + CHAR(13)+CHAR(10)
 		+ 'create table #errors (type nvarchar(32), code nvarchar(32), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 		+ 'select top 1 @tableID = t.id from as_crud_tables as t where t.code = ' + isnull('''' + t.code + '''', 'null') + ' order by t.id; ' + CHAR(13)+CHAR(10)
@@ -71,7 +69,8 @@ select top 1 'declare @tableID int, @columnID int, @datatypeID int, @editableTyp
 			+ 'insert into #errors values(''table'', ' 
 				+ isnull('''' + replace(t.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+CHAR(10)
-		+ (select 'begin try' + CHAR(13)+CHAR(10) + 
+		+ replace((select LEFT(Main.Columns, Len(Main.Columns)) As Columns from (select ( 
+		select 'begin try' + CHAR(13)+CHAR(10) + 
 			'set @datatypeID = null; set @editableTypeID = null; set @filterTypeID = null; ' + CHAR(13)+CHAR(10)
 			+ 'select @datatypeID = d.id from as_crud_dataTypes as d where d.code = '
 				 + isnull('''' + replace(
@@ -112,19 +111,23 @@ select top 1 'declare @tableID int, @columnID int, @datatypeID int, @editableTyp
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'insert into #errors values(''tableColumn'', ' 
 				+ isnull('''' + replace(c.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
-		+ 'end catch' + CHAR(13)+CHAR(10) from as_crud_cols as c where t.id = c.tableID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
+		+ 'end catch' + CHAR(13)+CHAR(10) from as_crud_cols as c where t.id = c.tableID FOR XML PATH ('')) as Columns) as Main), '&#x0D;', '')
 		+ 'begin try'  + CHAR(13)+CHAR(10)
-			+ 'declare @name nvarchar(256), @sqlExpec nvarchar(500);' + CHAR(13)+CHAR(10)
-			+ 'declare cur CURSOR LOCAL for
-				select o.name from sys.objects as o where o.name like ''crud_' + t.code + '[_]%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
-			+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
-			+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
-			+ 'set @sqlExpec = ''drop procedure '' + @name' + CHAR(13)+CHAR(10)
-			+ 'exec sp_executesql @sqlExpec' + CHAR(13)+CHAR(10)
-			+ 'fetch next from cur into @name END' + CHAR(13)+CHAR(10)
-			+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
-			+ (select COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (o.object_id)), '''', '''''') + '''', '') + CHAR(13)+CHAR(10) AS [text()]
-				 from  sys.objects as o where o.name like 'crud_'+ t.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
+			+ 'if exists (select * from sys.objects where object_id = OBJECT_ID(N''[crud_' + t.code +'_getItems]'') AND type in (N''P'', N''PC''))' + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N''drop procedure [crud_' + t.code +'_getItems]''' + CHAR(13)+CHAR(10)
+			+ 'if exists (select * from sys.objects where object_id = OBJECT_ID(N''[crud_' + t.code +'_updateField]'') AND type in (N''P'', N''PC''))' + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N''drop procedure [crud_' + t.code +'_updateField]''' + CHAR(13)+CHAR(10)
+			+ 'if exists (select * from sys.objects where object_id = OBJECT_ID(N''[crud_' + t.code +'_deleteItem]'') AND type in (N''P'', N''PC''))' + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N''drop procedure [crud_' + t.code +'_deleteItem]''' + CHAR(13)+CHAR(10)
+			+ 'if exists (select * from sys.objects where object_id = OBJECT_ID(N''[crud_' + t.code +'_fastCreate]'') AND type in (N''P'', N''PC''))' + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N''drop procedure [crud_' + t.code +'_fastCreate]''' + CHAR(13)+CHAR(10)
+			+ 'if exists (select * from sys.objects where object_id = OBJECT_ID(N''[crud_' + t.code +'_fastCreate_search]'') AND type in (N''P'', N''PC''))' + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N''drop procedure [crud_' + t.code +'_fastCreate_search]''' + CHAR(13)+CHAR(10)
+			+ COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (OBJECT_ID(N'crud_' + t.code +'_getItems'))), '''', '''''') + '''', '') + CHAR(13)+CHAR(10)
+			+ COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (OBJECT_ID(N'crud_' + t.code +'_updateField'))), '''', '''''') + '''', '') + CHAR(13)+CHAR(10)
+			+ COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (OBJECT_ID(N'crud_' + t.code +'_deleteItem'))), '''', '''''') + '''', '') + CHAR(13)+CHAR(10)
+			+ COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (OBJECT_ID(N'crud_' + t.code +'_fastCreate'))), '''', '''''') + '''', '') + CHAR(13)+CHAR(10)
+			+ COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (OBJECT_ID(N'crud_' + t.code +'_fastCreate_search'))), '''', '''''') + '''', '') + CHAR(13)+CHAR(10)
 		+ 'end try' + CHAR(13)+CHAR(10)
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'insert into #errors values(''tableProc'', ' 
