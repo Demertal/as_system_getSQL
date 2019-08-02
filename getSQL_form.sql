@@ -1,6 +1,4 @@
---create proc as_system_getSQL_form  @code nvarchar(32) as
-declare @code nvarchar(32)
-set @code = 'requestFromStore'
+create proc as_system_getSQL_form  @code nvarchar(32) as
 select top 1 'declare @formID int, @columnID int, @datatypeID int; set @formID = null; ' + CHAR(13)+CHAR(10)
 	+ 'create table #errors (type nvarchar(32), code nvarchar(32), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @formID = f.id from as_forms as f where f.code = ' + isnull('''' + f.code + '''', 'null') + ' order by f.id; ' + CHAR(13)+CHAR(10)
