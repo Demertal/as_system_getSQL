@@ -1,6 +1,6 @@
 create proc as_system_getSQL_form  @code nvarchar(32) as
 select top 1 'declare @formID int, @datatypeID int; set @formID = null; ' + CHAR(13)+CHAR(10)
-	+ 'create table #errors (type nvarchar(32), code nvarchar(32), message nvarchar(2048));' + CHAR(13)+CHAR(10)
+	+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @formID = f.id from as_forms as f where f.code = ' + isnull('''' + f.code + '''', 'null') + ' order by f.id; ' + CHAR(13)+CHAR(10)
 	+ 'begin try' + CHAR(13)+CHAR(10)
 		+ 'if @formID > 0 begin ' + CHAR(13)+CHAR(10) 
@@ -60,21 +60,27 @@ select top 1 'declare @formID int, @datatypeID int; set @formID = null; ' + CHAR
 			+ 'insert into #errors values(''formColumn'', ' 
 				+ isnull('''' + replace(fc.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+CHAR(10) from as_formCols as fc where f.id = fc.formID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
-		+ 'begin try'  + CHAR(13)+CHAR(10)
-			+ 'declare @name nvarchar(256), @sqlExpec nvarchar(500);' + CHAR(13)+CHAR(10)
-			+ 'declare cur CURSOR LOCAL for
-				select o.name from sys.objects as o where o.name like ''fm_' + f.code + '[_]%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
-			+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
-			+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
-			+ 'set @sqlExpec = ''drop procedure '' + @name' + CHAR(13)+CHAR(10)
-			+ 'exec sp_executesql @sqlExpec' + CHAR(13)+CHAR(10)
+		+ 'declare @name nvarchar(256), @sqlExpec nvarchar(500);' + CHAR(13)+CHAR(10)
+		+ 'declare cur CURSOR LOCAL for
+			select o.name from sys.objects as o where o.name like ''fm_' + f.code + '[_]%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
+		+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
+		+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
+			+ 'begin try'  + CHAR(13)+CHAR(10)
+				+ 'set @sqlExpec = ''drop procedure '' + @name' + CHAR(13)+CHAR(10)
+				+ 'exec sp_executesql @sqlExpec' + CHAR(13)+CHAR(10)
+			+ 'end try' + CHAR(13)+CHAR(10)
+			+ 'begin catch' + CHAR(13)+CHAR(10)
+				+ 'insert into #errors values(''formProc'', ' 
+					+ isnull('''' + replace(f.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
+			+ 'end catch' + CHAR(13)+CHAR(10)
 			+ 'fetch next from cur into @name END' + CHAR(13)+CHAR(10)
-			+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
-			+ (select COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (o.object_id)), '''', '''''') + '''', '') + CHAR(13)+CHAR(10) AS [text()]
-				 from  sys.objects as o where o.name like 'fm_'+ f.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
+		+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
+		+ (select COALESCE('begin try exec sp_executesql N''' + replace((select OBJECT_DEFINITION (o.object_id)), '''', '''''') + '''' + CHAR(13)+CHAR(10)
 		+ 'end try' + CHAR(13)+CHAR(10)
 		+ 'begin catch' + CHAR(13)+CHAR(10)
-			+ 'insert into #errors values(''tableProc'', ' 
-				+ isnull('''' + replace(f.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
+			+ 'insert into #errors values(''formProc'', ' 
+				+ isnull('''' + replace(o.name, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+CHAR(10)
+			, '') AS [text()]
+				 from  sys.objects as o where o.name like 'fm_'+ f.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')		
 		+ 'select * from #errors; drop table #errors;' as Result from as_forms as f where f.code = @code order by f.id;				

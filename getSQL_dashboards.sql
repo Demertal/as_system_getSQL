@@ -1,6 +1,8 @@
 create proc as_system_getSQL_dashboards @code nvarchar(32) as
+declare @code nvarchar(20)
+set @code = 'forAdmin'
 select top 1 'declare @dashboardID int; set @dashboardID = null; ' + CHAR(13)+CHAR(10)
-	+ 'create table #errors (type nvarchar(32), code nvarchar(32), message nvarchar(2048));' + CHAR(13)+CHAR(10)
+	+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @dashboardID = d.id from as_dashboards as d where d.code = ' + isnull('''' + d.code + '''', 'null') + ' order by d.id; ' + CHAR(13)+CHAR(10)
 	+ 'begin try' + CHAR(13)+CHAR(10)
 		+ 'if @dashboardID > 0 begin ' + CHAR(13)+CHAR(10) 
@@ -45,21 +47,26 @@ select top 1 'declare @dashboardID int; set @dashboardID = null; ' + CHAR(13)+CH
 			+ 'insert into #errors values(''dashboardPanel'', ' 
 				+ isnull('''' + replace(dp.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+CHAR(10) from as_dashboardPanels as dp where d.id = dp.dashboardID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
-		+ 'begin try'  + CHAR(13)+CHAR(10)
-			+ 'declare @name nvarchar(256), @sqlExpec nvarchar(500);' + CHAR(13)+CHAR(10)
-			+ 'declare cur CURSOR LOCAL for
-				select o.name from sys.objects as o where o.name like ''dashboard_' + d.code + '[_]%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
-			+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
-			+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
-			+ 'set @sqlExpec = ''drop procedure '' + @name' + CHAR(13)+CHAR(10)
-			+ 'exec sp_executesql @sqlExpec' + CHAR(13)+CHAR(10)
+		+ 'declare @name nvarchar(256), @sqlExpec nvarchar(500);' + CHAR(13)+CHAR(10)
+		+ 'declare cur CURSOR LOCAL for
+			select o.name from sys.objects as o where o.name like ''dashboard_' + d.code + '[_]%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
+		+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
+		+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
+			+ 'begin try'  + CHAR(13)+CHAR(10)
+				+ 'set @sqlExpec = ''drop procedure '' + @name' + CHAR(13)+CHAR(10)
+				+ 'exec sp_executesql @sqlExpec' + CHAR(13)+CHAR(10)								
+			+ 'end try' + CHAR(13)+CHAR(10)
+			+ 'begin catch' + CHAR(13)+CHAR(10)
+				+ 'insert into #errors values(''dashboardProc'', ' 
+					+ isnull('''' + replace(d.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
+			+ 'end catch' + CHAR(13)+CHAR(10)
 			+ 'fetch next from cur into @name END' + CHAR(13)+CHAR(10)
-			+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
-			+ (select COALESCE('exec sp_executesql N''' + replace((select OBJECT_DEFINITION (o.object_id)), '''', '''''') + '''', '') + CHAR(13)+CHAR(10) AS [text()]
-				 from  sys.objects as o where o.name like 'dashboard_'+ d.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
+		+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
+		+ (select COALESCE('begin try exec sp_executesql N''' + replace((select OBJECT_DEFINITION (o.object_id)), '''', '''''') + '''' + CHAR(13)+CHAR(10) 
 		+ 'end try' + CHAR(13)+CHAR(10)
 		+ 'begin catch' + CHAR(13)+CHAR(10)
-			+ 'insert into #errors values(''tableProc'', ' 
-				+ isnull('''' + replace(d.code, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
-		+ 'end catch' + CHAR(13)+CHAR(10)
+			+ 'insert into #errors values(''dashboardProc'', ' 
+				+ isnull('''' + replace(o.name, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
+		+ 'end catch' + CHAR(13)+CHAR(10), '') AS [text()]
+			 from  sys.objects as o where o.name like 'dashboard_'+ d.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')		
 		+ 'select * from #errors; drop table #errors;' as Result from as_dashboards as d where d.code = @code order by d.id;				
