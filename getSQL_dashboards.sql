@@ -1,6 +1,4 @@
 create proc as_system_getSQL_dashboards @code nvarchar(32) as
-declare @code nvarchar(20)
-set @code = 'forAdmin'
 select top 1 'declare @dashboardID int; set @dashboardID = null; ' + CHAR(13)+CHAR(10)
 	+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @dashboardID = d.id from as_dashboards as d where d.code = ' + isnull('''' + d.code + '''', 'null') + ' order by d.id; ' + CHAR(13)+CHAR(10)
@@ -69,4 +67,4 @@ select top 1 'declare @dashboardID int; set @dashboardID = null; ' + CHAR(13)+CH
 				+ isnull('''' + replace(o.name, '''', '''''') + ''' ,', 'null ,') + 'error_message());' + CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+CHAR(10), '') AS [text()]
 			 from  sys.objects as o where o.name like 'dashboard_'+ d.code +'[_]%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')		
-		+ 'select * from #errors; drop table #errors;' as Result from as_dashboards as d where d.code = @code order by d.id;				
+		+ 'select * from #errors; drop table #errors;' as Result from as_dashboards as d where d.code = @code order by d.id;
