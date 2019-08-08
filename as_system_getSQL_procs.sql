@@ -23,7 +23,7 @@ begin
 		+ 'fetch next from cur into @name END' + CHAR(13)+CHAR(10)
 	+ 'close cur deallocate cur' + CHAR(13)+CHAR(10)
 	+ (select COALESCE(cast('' as nvarchar(max)) + 'begin try' + CHAR(13)+CHAR(10)
-			+ 'exec sp_executesql N' + dbo.as_system_getStringFromCode ((select OBJECT_DEFINITION (o.object_id))) + CHAR(13)+CHAR(10)
+			+ 'exec sp_executesql N' + dbo.as_system_getStringFromCode ((select OBJECT_DEFINITION (OBJECT_ID(o.name)))) + CHAR(13)+CHAR(10)
 		+ 'end try' + CHAR(13)+CHAR(10)
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'insert into #errorsProc values('''+ @part + 'Proc'', ' 
