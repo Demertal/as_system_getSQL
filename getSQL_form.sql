@@ -3,7 +3,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 	DROP PROCEDURE dbo.as_system_getSQL_form
 GO
 
-create proc as_system_getSQL_form  @code nvarchar(32) as
+create proc dbo.as_system_getSQL_form  @code nvarchar(32) as
 select top 1 'declare @formID int, @datatypeID int; set @formID = null; ' + CHAR(13)+CHAR(10)
 	+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @formID = f.id from as_forms as f where f.code = ' + isnull('''' + f.code + '''', 'null') + ' order by f.id; ' + CHAR(13)+CHAR(10)
