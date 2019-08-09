@@ -3,7 +3,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 	DROP FUNCTION dbo.as_system_getSQL_procs
 GO
 
-create function  as_system_getSQL_procs (@part nvarchar(32), @code nvarchar(32))
+create function  dbo.as_system_getSQL_procs (@part nvarchar(32), @code nvarchar(32))
 returns nvarchar(max)
 begin
 	return (select 'create table #errorsProc (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10) 
