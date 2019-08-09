@@ -4,7 +4,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 GO
 
 
-create function  as_system_getStringFromCode (@code nvarchar(max))
+create function  dbo.as_system_getStringFromCode (@code nvarchar(max))
 returns nvarchar(max)
 begin
 	declare @result nvarchar(max)
