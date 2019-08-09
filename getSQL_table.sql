@@ -3,7 +3,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 	DROP PROCEDURE dbo.as_system_getSQL_table
 GO
 
-create proc as_system_getSQL_table  @code nvarchar(32) as
+create proc dbo.as_system_getSQL_table  @code nvarchar(32) as
 select top 1 'declare @tableID int, @datatypeID int, @editableTypeID int, @filterTypeID int; set @tableID = null; ' + CHAR(13)+CHAR(10)
 		+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 		+ 'select top 1 @tableID = t.id from as_crud_tables as t where t.code = ' + isnull('''' + t.code + '''', 'null') + ' order by t.id; ' + CHAR(13)+CHAR(10)
