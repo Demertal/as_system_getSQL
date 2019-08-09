@@ -3,7 +3,7 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 	DROP PROCEDURE dbo.as_system_getSQL_dashboards
 GO
 
-create proc as_system_getSQL_dashboards @code nvarchar(32) as
+create proc dbo.as_system_getSQL_dashboards @code nvarchar(32) as
 select top 1 cast('' as nvarchar(max)) + 'declare @dashboardID int; set @dashboardID = null; ' + CHAR(13)+CHAR(10)
 	+ 'create table #errors (type nvarchar(32), code nvarchar(256), message nvarchar(2048));' + CHAR(13)+CHAR(10)
 	+ 'select top 1 @dashboardID = d.id from as_dashboards as d where d.code = ' + isnull('''' + d.code + '''', 'null') + ' order by d.id; ' + CHAR(13)+CHAR(10)
