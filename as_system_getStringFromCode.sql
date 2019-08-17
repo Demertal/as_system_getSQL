@@ -15,7 +15,7 @@ begin
 			else LTRIM(RTRIM(value))
 		end)
 		+ CHAR(10)
-		from dbo.splitstring(@code, CHAR(10)) FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
+		from dbo.split(@code, CHAR(10)) FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
 	return cast('' as nvarchar(max)) + '''' + replace((select @result), '''', '''''') + ''''
 end
 go

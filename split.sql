@@ -1,9 +1,9 @@
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = 
-            OBJECT_ID(N'dbo.splitstring'))
-	DROP FUNCTION dbo.splitstring
+            OBJECT_ID(N'dbo.split'))
+	DROP FUNCTION dbo.split
 GO
 
-CREATE FUNCTION dbo.splitstring ( @stringToSplit NVARCHAR(MAX), @char NCHAR )
+CREATE FUNCTION dbo.split ( @stringToSplit NVARCHAR(MAX), @char NCHAR )
 RETURNS
  @returnList TABLE ([value] [nvarchar] (500))
 AS
