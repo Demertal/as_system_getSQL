@@ -135,6 +135,6 @@ select top 1 'declare @tableID int, @datatypeID int, @editableTypeID int, @filte
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'print N''При добалении колонки ' + c.code + ' таблицы возникла ошибка: '' + error_message()'	+ CHAR(13)+CHAR(10)
 		+ 'end catch'+ CHAR(13)+ CHAR(13)+CHAR(10) from as_crud_cols as c where t.id = c.tableID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
-		+ dbo.as_system_getSQL_procs ('crud_', @code + '[_]', @overwrite) + CHAR(13)+CHAR(10)
+		+ dbo.as_system_getSQL_procs ('crud_' + @code + '[_]', @overwrite) + CHAR(13)+CHAR(10)
 		+'--Конец скрипта'
 		as Result from as_crud_tables as t where t.code = @code order by t.id;			

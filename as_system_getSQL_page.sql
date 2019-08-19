@@ -69,6 +69,6 @@ select top 1 'declare @pageID int; set @pageID = null; ' + CHAR(13)+CHAR(10)
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'print N''При обновлении\добавлении страницы ' + @code + ' возникла ошибка: '' + error_message()'	+ CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+ CHAR(13)+CHAR(10)		
-		+ dbo.as_system_getSQL_procs ('pg_crumbs_', @code, @overwrite) + CHAR(13)+CHAR(10)
+		+ dbo.as_system_getSQL_procs ('pg_crumbs_' + @code, @overwrite) + CHAR(13)+CHAR(10)
 		+'--Конец скрипта'
 		as Result from pg_pages as p where p.code = @code order by p.id;			

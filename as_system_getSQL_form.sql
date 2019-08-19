@@ -84,6 +84,6 @@ select top 1 'declare @formID int, @datatypeID int; set @formID = null; ' + CHAR
 	+ 'begin catch' + CHAR(13)+CHAR(10)
 		+ 'print N''При добалении колонки ' + fc.code + ' формы возникла ошибка: '' + error_message()'	+ CHAR(13)+CHAR(10)
 	+ 'end catch' + CHAR(13)+ CHAR(13)+CHAR(10) from as_formCols as fc where f.id = fc.formID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
-	+ dbo.as_system_getSQL_procs ('fm_', @code + '[_]', @overwrite) + CHAR(13)+CHAR(10)
+	+ dbo.as_system_getSQL_procs ('fm_' + @code + '[_]', @overwrite) + CHAR(13)+CHAR(10)
 	+'--Конец скрипта'
 	as Result from as_forms as f where f.code = @code order by f.id;				

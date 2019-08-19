@@ -3,17 +3,15 @@ IF  EXISTS (SELECT * FROM sys.objects WHERE object_id =
 	DROP FUNCTION dbo.as_system_getSQL_procs
 GO
 
-create function  dbo.as_system_getSQL_procs (@part nvarchar(32), @code nvarchar(32), @overwrite bit = 1 )
+create function  dbo.as_system_getSQL_procs (@part_name nvarchar(100), @overwrite bit = 1 )
 returns nvarchar(max) as
 begin
-	declare @name nvarchar(80);
-	set @name = COALESCE(@part, '') + COALESCE(@code, '')
 	return isnull((select CHAR(13)+CHAR(10) 
 		+ (case @overwrite when 1 then
 			'print N''Попытка удаления хранимых процедур''' + CHAR(13)+CHAR(10)
 			+ 'declare @name nvarchar(256), @sqlExpec nvarchar(max);' + CHAR(13)+CHAR(10)
 			+ 'declare cur CURSOR LOCAL for '
-				+ 'select o.name from sys.objects as o where o.name like ''' + @name + '%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
+				+ 'select o.name from sys.objects as o where o.name like ''' + @part_name + '%'' AND type in (N''P'', N''PC'')' + CHAR(13)+CHAR(10)
 			+ 'open cur fetch next from cur into @name' + CHAR(13)+CHAR(10)
 			+ 'while @@FETCH_STATUS = 0 BEGIN' + CHAR(13)+CHAR(10)
 				+ 'begin try'  + CHAR(13)+CHAR(10)
@@ -45,7 +43,7 @@ begin
 					   + 'print N''Процедура ' + o.name + ' уже существует и не будет перезаписана''' + CHAR(13)+CHAR(10)
 				else '' end)
 		+ CHAR(13)+ CHAR(13) +CHAR(10), '') AS [text()]
-	 from  sys.objects as o where o.name like  @name + '%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)') 
+	 from  sys.objects as o where o.name like  @part_name + '%' FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)') 
 	 + '--Конец'), '--Хранимых процедур не найдено' + CHAR(13)+CHAR(10))
 end
 go

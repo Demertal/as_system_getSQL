@@ -70,6 +70,6 @@ select top 1 cast('' as nvarchar(max)) + 'declare @dashboardID int; set @dashboa
 		+ 'begin catch' + CHAR(13)+CHAR(10)
 			+ 'print N''При добалении панели ' + dp.code + ' дашборда возникла ошибка: '' + error_message()'	+ CHAR(13)+CHAR(10)
 		+ 'end catch' + CHAR(13)+ CHAR(13)+CHAR(10) from as_dashboardPanels as dp where d.id = dp.dashboardID FOR XML PATH (''),TYPE).value('.','NVARCHAR(MAX)')
-	+ dbo.as_system_getSQL_procs ('dashboard_', @code + '[_]', @overwrite) +CHAR(13)+CHAR(10)
+	+ dbo.as_system_getSQL_procs ('dashboard_' + @code + '[_]', @overwrite) +CHAR(13)+CHAR(10)
 	+'--Конец скрипта'
 	as Result from as_dashboards as d where d.code = @code order by d.id;
